@@ -31,7 +31,7 @@ export default function App() {
   const { conexion, datos, cargando, sincronizando, error, limpiarError } = useFinanzas();
   const [pestana, setPestana] = useState<Pestana>('resumen');
   const [mes, setMes] = useState(mesActual());
-  const [form, setForm] = useState<{ abierto: boolean; mov: Movimiento | null; tipo?: Tipo }>({ abierto: false, mov: null });
+  const [form, setForm] = useState<{ abierto: boolean; mov: Movimiento | null; tipo?: Tipo; voz?: boolean }>({ abierto: false, mov: null });
   useTema(datos?.config.tema);
 
   // Accesos directos (widget / atajos) y botón atrás de Android
@@ -40,7 +40,7 @@ export default function App() {
   useEffect(
     () =>
       escucharAccesos(
-        (tipo) => setForm({ abierto: true, mov: null, tipo }),
+        (a) => setForm({ abierto: true, mov: null, tipo: a.tipo, voz: a.voz }),
         () => {
           if (estado.current.form.abierto) { setForm({ abierto: false, mov: null }); return true; }
           if (estado.current.pestana !== 'resumen') { setPestana('resumen'); return true; }
@@ -127,7 +127,7 @@ export default function App() {
         </div>
       </nav>
 
-      <FormMovimiento abierta={form.abierto} editar={form.mov} tipoInicial={form.tipo} onCerrar={() => setForm({ abierto: false, mov: null })} />
+      <FormMovimiento abierta={form.abierto} editar={form.mov} tipoInicial={form.tipo} conVoz={form.voz} onCerrar={() => setForm({ abierto: false, mov: null })} />
     </div>
   );
 }

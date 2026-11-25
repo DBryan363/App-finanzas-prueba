@@ -1,8 +1,7 @@
 name: Compilar APK Android
 
+# Solo se ejecuta a mano: Actions → Compilar APK Android → Run workflow
 on:
-  push:
-    branches: [main, ccr-3b236b79-2lityj]
   workflow_dispatch:
 
 permissions:

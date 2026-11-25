@@ -4,6 +4,7 @@ import { AlmacenDemo } from '../api/demo';
 import { Categoria, Config, Tipo } from '../api/types';
 import { Hoja } from '../components/Hoja';
 import { MONEDAS, uid } from '../lib/format';
+import { leerAprendidas, normalizar, PALABRAS_BASE } from '../lib/interpretar';
 import { useFinanzas } from '../lib/store';
 
 const COLORES = ['#1F6FB2', '#0F7B8A', '#C8742B', '#6A4CE2', '#D4A017', '#B23A48', '#1E7F4F', '#5B6B8C'];
@@ -21,9 +22,14 @@ export function Ajustes() {
   const sinGuardar = JSON.stringify(cfg) !== JSON.stringify(datos.config);
   const cats = datos.categorias.filter((c) => c.tipo === tipoCat);
 
-  const guardarCat = (c: Categoria) => {
+  const aprendidas = leerAprendidas(datos.config.palabras);
+  const guardarCat = (c: Categoria, palabras: string) => {
     const existe = datos.categorias.some((x) => x.id === c.id);
     guardarCategorias(existe ? datos.categorias.map((x) => (x.id === c.id ? c : x)) : [...datos.categorias, c]);
+    const limpias = palabras.split(',').map((x) => normalizar(x)).filter(Boolean).join(', ');
+    if (limpias !== (aprendidas[c.id] ?? '')) {
+      guardarConfig({ ...datos.config, palabras: JSON.stringify({ ...aprendidas, [c.id]: limpias }) });
+    }
     setEditCat(null);
   };
   const borrarCat = (id: string) => {
@@ -112,19 +118,21 @@ export function Ajustes() {
         </div>
       </section>
 
-      <EditorCategoria cat={editCat} onCerrar={() => setEditCat(null)} onGuardar={guardarCat} onBorrar={borrarCat}
+      <EditorCategoria cat={editCat} palabras={editCat ? aprendidas[editCat.id] ?? '' : ''} onCerrar={() => setEditCat(null)} onGuardar={guardarCat} onBorrar={borrarCat}
         existe={!!editCat && datos.categorias.some((x) => x.id === editCat.id)}
         enUso={!!editCat && datos.movimientos.some((m) => m.categoria === editCat.id)} />
     </div>
   );
 }
 
-function EditorCategoria({ cat, existe, enUso, onCerrar, onGuardar, onBorrar }: {
-  cat: Categoria | null; existe: boolean; enUso: boolean; onCerrar(): void; onGuardar(c: Categoria): void; onBorrar(id: string): void;
+function EditorCategoria({ cat, palabras, existe, enUso, onCerrar, onGuardar, onBorrar }: {
+  cat: Categoria | null; palabras: string; existe: boolean; enUso: boolean; onCerrar(): void; onGuardar(c: Categoria, palabras: string): void; onBorrar(id: string): void;
 }) {
   const [c, setC] = useState<Categoria | null>(cat);
-  useEffect(() => setC(cat), [cat]);
+  const [pal, setPal] = useState(palabras);
+  useEffect(() => { setC(cat); setPal(palabras); }, [cat, palabras]);
   if (!c) return null;
+  const base = Object.entries(PALABRAS_BASE).find(([k]) => normalizar(c.nombre).includes(k))?.[1] ?? [];
   return (
     <Hoja abierta={!!cat} titulo={existe ? 'Editar categoría' : 'Nueva categoría'} onCerrar={onCerrar}>
       <div className="space-y-4">
@@ -156,11 +164,19 @@ function EditorCategoria({ cat, existe, enUso, onCerrar, onGuardar, onBorrar }: 
               onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); setC({ ...c, presupuesto: v === '' ? '' : Number(v) }); }} />
           </label>
         )}
+        <label className="block text-sm">
+          <span className="mb-1 block text-ink-2">Palabras para el dictado por voz</span>
+          <textarea className="input min-h-20" placeholder="Ej.: pasaje, combi, taxi" value={pal} onChange={(e) => setPal(e.target.value)} />
+          <span className="mt-1 block text-xs text-ink-2">
+            Sepáralas con comas. La app también aprende sola cuando corriges una categoría.
+            {base.length > 0 && <> Ya reconoce: {base.slice(0, 8).join(', ')}…</>}
+          </span>
+        </label>
         <div className="flex gap-2">
           {existe && (
             <button className="btn btn-ghost text-danger" disabled={enUso} title={enUso ? 'Tiene movimientos asociados' : 'Borrar'} onClick={() => onBorrar(c.id)}><Trash2 size={18} /></button>
           )}
-          <button className="btn btn-primary flex-1" disabled={!c.nombre.trim()} onClick={() => onGuardar({ ...c, nombre: c.nombre.trim() })}>Guardar</button>
+          <button className="btn btn-primary flex-1" disabled={!c.nombre.trim()} onClick={() => onGuardar({ ...c, nombre: c.nombre.trim() }, pal)}>Guardar</button>
         </div>
         {existe && enUso && <p className="text-xs text-ink-2">No se puede borrar porque tiene movimientos registrados.</p>}
       </div>

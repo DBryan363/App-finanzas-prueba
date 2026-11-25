@@ -15,6 +15,10 @@
   ],
   "shortcuts": [
     {
+      "name": "Dictar movimiento",
+      "url": "./?voz=1"
+    },
+    {
       "name": "Nuevo gasto",
       "url": "./?nuevo=gasto"
     },

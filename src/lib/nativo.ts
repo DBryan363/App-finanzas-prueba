@@ -13,16 +13,18 @@ export function actualizarWidget(o: { mes: string; balance: string; ingresos: st
   if (esNativo) Widget.actualizar(o).catch(() => {});
 }
 
-function tipoDesdeUrl(url: string): Tipo | null {
+type Acceso = { tipo?: Tipo; voz?: boolean };
+function tipoDesdeUrl(url: string): Acceso | null {
+  if (/[/?&]voz\b/.test(url)) return { voz: true };
   const m = url.match(/nuevo[/=](gasto|ingreso)/);
-  return m ? (m[1] as Tipo) : null;
+  return m ? { tipo: m[1] as Tipo } : null;
 }
 
 /**
  * Escucha los accesos directos: botones del widget (misfinanzas://nuevo/gasto)
  * o atajos de la web instalada (?nuevo=gasto). Devuelve la función para dejar de escuchar.
  */
-export function escucharAccesos(abrirForm: (t: Tipo) => void, alVolver: () => boolean) {
+export function escucharAccesos(abrirForm: (a: Acceso) => void, alVolver: () => boolean) {
   const inicial = tipoDesdeUrl(window.location.search);
   if (inicial) {
     abrirForm(inicial);

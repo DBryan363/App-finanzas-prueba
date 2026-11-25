@@ -64,15 +64,14 @@ export function ProveedorFinanzas({ children }: { children: ReactNode }) {
   /** Cambio optimista: se ve al instante y se sincroniza por detrás. */
   const optimista = useCallback(
     async (cambio: (d: Datos) => Datos, accion: (a: Almacen) => Promise<void>) => {
-      if (!almacen || !datos) return;
-      const previo = datos;
-      setDatos(cambio(datos));
+      if (!almacen) return;
+      setDatos((d) => (d ? cambio(d) : d));
       setPendientes((n) => n + 1);
       try { await accion(almacen); }
-      catch (e: any) { setDatos(previo); setError('No se pudo guardar: ' + (e.message || e)); }
+      catch (e: any) { setError('No se pudo guardar: ' + (e.message || e)); recargar(); }
       finally { setPendientes((n) => n - 1); }
     },
-    [almacen, datos],
+    [almacen, recargar],
   );
 
   const valor: Ctx = {
