@@ -37,6 +37,7 @@ public class FinanzasWidget extends AppWidgetProvider {
         v.setTextViewText(R.id.w_gastos, "↓ " + p.getString("gastos", "—"));
 
         v.setOnClickPendingIntent(R.id.w_raiz, abrir(ctx, "misfinanzas://inicio", 10));
+        v.setOnClickPendingIntent(R.id.w_btn_voz, abrir(ctx, "misfinanzas://voz", 13));
         v.setOnClickPendingIntent(R.id.w_btn_gasto, abrir(ctx, "misfinanzas://nuevo/gasto", 11));
         v.setOnClickPendingIntent(R.id.w_btn_ingreso, abrir(ctx, "misfinanzas://nuevo/ingreso", 12));
         return v;
