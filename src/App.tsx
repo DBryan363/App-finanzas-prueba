@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Home, List, Loader2, Plus, Settings, X } from 'lucide-react';
-import { Movimiento } from './api/types';
+import { Movimiento, Tipo } from './api/types';
 import { FormMovimiento } from './components/FormMovimiento';
-import { mesActual } from './lib/format';
+import { dinero, mesActual, mesLargo } from './lib/format';
+import { actualizarWidget, escucharAccesos } from './lib/nativo';
+import { delMes, totales } from './lib/stats';
 import { useFinanzas } from './lib/store';
 import { Ajustes } from './pages/Ajustes';
 import { Conectar } from './pages/Conectar';
@@ -29,8 +31,33 @@ export default function App() {
   const { conexion, datos, cargando, sincronizando, error, limpiarError } = useFinanzas();
   const [pestana, setPestana] = useState<Pestana>('resumen');
   const [mes, setMes] = useState(mesActual());
-  const [form, setForm] = useState<{ abierto: boolean; mov: Movimiento | null }>({ abierto: false, mov: null });
+  const [form, setForm] = useState<{ abierto: boolean; mov: Movimiento | null; tipo?: Tipo }>({ abierto: false, mov: null });
   useTema(datos?.config.tema);
+
+  // Accesos directos (widget / atajos) y botón atrás de Android
+  const estado = useRef({ form, pestana });
+  estado.current = { form, pestana };
+  useEffect(
+    () =>
+      escucharAccesos(
+        (tipo) => setForm({ abierto: true, mov: null, tipo }),
+        () => {
+          if (estado.current.form.abierto) { setForm({ abierto: false, mov: null }); return true; }
+          if (estado.current.pestana !== 'resumen') { setPestana('resumen'); return true; }
+          return false;
+        },
+      ),
+    [],
+  );
+
+  // Mantiene el widget de Android al día con el mes actual
+  useEffect(() => {
+    if (!datos) return;
+    const mes = mesActual();
+    const t = totales(delMes(datos.movimientos, mes));
+    const m = datos.config.moneda;
+    actualizarWidget({ mes: mesLargo(mes).split(' ')[0], balance: dinero(t.balance, m), ingresos: dinero(t.ingresos, m), gastos: dinero(t.gastos, m) });
+  }, [datos]);
 
   if (!conexion) return <Conectar />;
 
@@ -100,7 +127,7 @@ export default function App() {
         </div>
       </nav>
 
-      <FormMovimiento abierta={form.abierto} editar={form.mov} onCerrar={() => setForm({ abierto: false, mov: null })} />
+      <FormMovimiento abierta={form.abierto} editar={form.mov} tipoInicial={form.tipo} onCerrar={() => setForm({ abierto: false, mov: null })} />
     </div>
   );
 }

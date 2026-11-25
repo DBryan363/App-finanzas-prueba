@@ -1,0 +1,87 @@
+name: Compilar APK Android
+
+on:
+  push:
+    branches: [main, ccr-3b236b79-2lityj]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Compilar la app web
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: Preparar clave de firma
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FINANZAS_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.FINANZAS_KEYSTORE_PASSWORD }}
+        run: |
+          KS="$RUNNER_TEMP/firma.keystore"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Usando la clave guardada en los Secrets"
+            echo "$KEYSTORE_BASE64" | base64 -d > "$KS"
+            PASS="$KEYSTORE_PASSWORD"
+          else
+            echo "::warning::Sin clave en Secrets: se usa una clave temporal. Para actualizar habrá que desinstalar la versión anterior."
+            PASS="temporal-$(openssl rand -hex 12)"
+            keytool -genkeypair -keystore "$KS" -alias finanzas -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" -dname "CN=Mis Finanzas"
+          fi
+          echo "::add-mask::$PASS"
+          echo "FINANZAS_KEYSTORE=$KS" >> "$GITHUB_ENV"
+          echo "FINANZAS_KEYSTORE_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "FINANZAS_KEY_ALIAS=finanzas" >> "$GITHUB_ENV"
+
+      - name: Compilar APK firmado
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Renombrar APK
+        id: apk
+        run: |
+          NOMBRE="MisFinanzas-v0.1.${{ github.run_number }}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$NOMBRE"
+          echo "nombre=$NOMBRE" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: ${{ steps.apk.outputs.nombre }}
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v0.1.${{ github.run_number }}
+          name: Mis Finanzas 0.1.${{ github.run_number }} (APK de prueba)
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          files: ${{ steps.apk.outputs.nombre }}
+          body: |
+            APK de prueba compilado automáticamente desde `${{ github.sha }}`.
+            Descarga el archivo `.apk` de abajo desde tu celular Android e instálalo.

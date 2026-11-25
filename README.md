@@ -29,5 +29,11 @@ Requisito: en el repositorio, **Settings → Pages → Source: GitHub Actions**.
 
 ## Próximos pasos
 
-- [ ] APK Android con Capacitor, compilado por GitHub Actions
+- [x] APK Android con Capacitor, compilado por GitHub Actions
 - [ ] Inicio de sesión con Google (Cloud Console) como alternativa al script
+
+## APK Android
+
+- Cada push compila el APK con `.github/workflows/apk.yml` y lo publica en **Releases** (`apk-v0.1.N`).
+- `android/` es el proyecto de Capacitor. Incluye un **widget** (`FinanzasWidget.java`) que muestra el balance del mes y tiene botones para registrar un gasto o un ingreso. Esos botones abren la app con `misfinanzas://nuevo/gasto`.
+- **Firma:** la clave no se guarda en el repositorio. Si existen los secrets `FINANZAS_KEYSTORE_BASE64` (el archivo .keystore en base64, con alias `finanzas`) y `FINANZAS_KEYSTORE_PASSWORD`, el workflow los usa y cada APK se instala encima del anterior. Si no existen, genera una clave temporal en cada compilación, y para actualizar hay que desinstalar la versión anterior.

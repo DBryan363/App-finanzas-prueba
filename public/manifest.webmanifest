@@ -5,5 +5,22 @@
   "display": "standalone",
   "background_color": "#F4F6FA",
   "theme_color": "#0B1F3A",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo gasto",
+      "url": "./?nuevo=gasto"
+    },
+    {
+      "name": "Nuevo ingreso",
+      "url": "./?nuevo=ingreso"
+    }
+  ]
 }
