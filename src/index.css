@@ -64,6 +64,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .tabular { font-variant-numeric: tabular-nums; }
+@layer components {
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
 .input {
   width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
@@ -76,4 +77,5 @@ body {
 .btn-primary { background: var(--hero); color: #fff; }
 :root[data-theme='dark'] .btn-primary { background: var(--gold); color: #0a1220; }
 .btn-ghost { background: var(--surface-2); color: var(--ink); }
+}
 .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
