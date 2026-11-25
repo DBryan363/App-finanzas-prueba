@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+/* Paleta: azul marino corporativo + dorado sobrio.
+   Ingresos (azul) y gastos (cobre) validados para daltonismo. */
+:root {
+  color-scheme: light;
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --ink: #0f1b2d;
+  --ink-2: #5a6478;
+  --line: #e2e7ef;
+  --hero: #0b1f3a;
+  --hero-2: #17345e;
+  --gold: #c9a55a;
+  --gold-ink: #8a6a28;
+  --income: #1f6fb2;
+  --expense: #c8742b;
+  --danger: #b23a48;
+  --ok: #1e7f4f;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0a1220;
+  --surface: #111c31;
+  --surface-2: #18253e;
+  --ink: #e8edf5;
+  --ink-2: #93a0b5;
+  --line: #23314b;
+  --hero: #142a4d;
+  --hero-2: #1d3a66;
+  --gold: #d4b46c;
+  --gold-ink: #d4b46c;
+  --income: #4a90d9;
+  --expense: #c97f3a;
+  --danger: #e06c78;
+  --ok: #4cbb7f;
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-hero: var(--hero);
+  --color-hero-2: var(--hero-2);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+}
+
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+.tabular { font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.input {
+  width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
+  padding: 0.7rem 0.85rem; color: var(--ink); outline: none; font-size: 16px;
+}
+.input:focus { border-color: var(--income); box-shadow: 0 0 0 3px color-mix(in srgb, var(--income) 20%, transparent); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: 12px; padding: .75rem 1rem; font-weight: 600; transition: opacity .15s, transform .1s; }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; }
+.btn-primary { background: var(--hero); color: #fff; }
+:root[data-theme='dark'] .btn-primary { background: var(--gold); color: #0a1220; }
+.btn-ghost { background: var(--surface-2); color: var(--ink); }
+.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
