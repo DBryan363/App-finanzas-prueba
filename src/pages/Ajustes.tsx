@@ -68,7 +68,7 @@ export function Ajustes() {
         <div className="flex items-center gap-3 text-sm">
           <span className="flex-1">
             <span className="block">Ocultar balance</span>
-            <span className="block text-xs text-ink-2">Muestra «***» en el resumen y en el widget. Toca el balance para verlo un momento.</span>
+            <span className="block text-xs text-ink-2">Muestra «***» en el resumen. En el widget también oculta ingresos y gastos. Toca el balance para verlo un momento.</span>
           </span>
           <button
             role="switch"

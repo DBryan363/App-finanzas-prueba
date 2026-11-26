@@ -170,7 +170,7 @@ classDiagram
 | Clave | Quién la escribe | Uso |
 |---|---|---|
 | `nombre`, `moneda`, `metaAhorro`, `tema` | Ajustes | Preferencias generales |
-| `ocultarBalance` | Ajustes (`'si'` / `'no'`) | Oculta el balance con `***` en el resumen y en el widget |
+| `ocultarBalance` | Ajustes (`'si'` / `'no'`) | Oculta el balance con `***` en el resumen; en el widget oculta también ingresos y gastos |
 | `palabras` | Editor de categoría (JSON) | Palabras aprendidas para el dictado, por id de categoría |
 | `version` | `preparar()` | Versión del esquema del script |
 
@@ -336,7 +336,7 @@ Detalles importantes:
 
 - **El widget no calcula nada.** La app le envía el texto ya formateado (por ejemplo `S/ 2,946.00`). Así el formato de moneda se define en un solo lugar.
 - **El widget se actualiza solo cuando la app corre.** Si cambian los datos desde otro dispositivo, el widget queda con la última cifra hasta que se abra la app.
-- **Modo oculto:** cuando `ocultarBalance` está activo, la app envía `S/ ***` al widget. La cifra real nunca sale de la app hacia el widget.
+- **Modo oculto:** cuando `ocultarBalance` está activo, la app envía `S/ ***` al widget en el balance, los ingresos y los gastos (con ingresos y gastos se podría calcular el balance). Las cifras reales nunca salen de la app hacia el widget.
 
 ### 7.2 Accesos directos y deep links
 
@@ -401,7 +401,7 @@ cd android && ./gradlew assembleRelease   # APK (requiere Java 21)
 | Datos en el dispositivo | Caché y conexión en `localStorage` | Sin cifrado adicional. Se borran al desconectar. |
 | Secretos en el repo | Ninguno; la firma va en Secrets de GitHub | El repositorio es público. |
 | Reconocimiento de voz | Lo hace el sistema operativo o el navegador | En el APK, el servicio de voz de Google del celular; en el navegador, Chrome (que en general envía el audio a servidores de Google). La interpretación de la frase sí es local. |
-| Widget | El texto del balance queda en SharedPreferences | Si el balance está oculto, solo se guarda `***`. |
+| Widget | Los textos del widget quedan en SharedPreferences | Si el balance está oculto, solo se guarda `***` para balance, ingresos y gastos. |
 
 **Mejora posible:** Google Sign-In (ya listado como pendiente en `CLAUDE.md`) permitiría autenticar sin depender de una URL secreta, pero requiere configurar un proyecto en Google Cloud.
 

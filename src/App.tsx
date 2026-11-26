@@ -56,8 +56,9 @@ export default function App() {
     const mes = mesActual();
     const t = totales(delMes(datos.movimientos, mes));
     const m = datos.config.moneda;
-    const balance = datos.config.ocultarBalance === 'si' ? dineroOculto(m) : dinero(t.balance, m);
-    actualizarWidget({ mes: mesLargo(mes).split(' ')[0], balance, ingresos: dinero(t.ingresos, m), gastos: dinero(t.gastos, m) });
+    // Con el balance oculto, el widget tampoco muestra ingresos ni gastos (con ellos se podría calcular)
+    const ver = (n: number) => (datos.config.ocultarBalance === 'si' ? dineroOculto(m) : dinero(n, m));
+    actualizarWidget({ mes: mesLargo(mes).split(' ')[0], balance: ver(t.balance), ingresos: ver(t.ingresos), gastos: ver(t.gastos) });
   }, [datos]);
 
   if (!conexion) return <Conectar />;
