@@ -43,7 +43,7 @@ Piezas principales:
 1. **Privacidad por diseño.** Los datos viven en la cuenta de Google de cada persona. El desarrollador no ve ningún dato.
 2. **Sin costo de infraestructura.** Todo corre en servicios gratuitos: GitHub Pages, Apps Script y Google Sheets.
 3. **Sin autenticación propia.** La URL `/exec` del script funciona como contraseña. Quien la tenga puede leer y escribir la hoja.
-4. **Todo el procesamiento de lenguaje es local.** El dictado por voz y la interpretación de frases ocurren en el dispositivo, sin enviar texto a ningún servicio de IA.
+4. **La interpretación de frases es local y sin IA.** Convertir la voz en texto lo hace el reconocedor de voz del sistema (que puede usar servicios de Google). Entender la frase (monto, fecha, categoría) lo hacen reglas programadas en el propio código, sin ningún modelo de lenguaje.
 
 ---
 
@@ -294,7 +294,7 @@ flowchart TD
 
 ### 6.2 Interpretación (`src/lib/interpretar.ts`)
 
-Todo ocurre en el dispositivo, en este orden:
+Esta parte no usa servicios externos ni modelos de IA; son reglas de texto que se ejecutan en este orden:
 
 1. **Normalización**: pasa a minúsculas, quita tildes y signos.
 2. **Números en palabras**: convierte "mil doscientos cincuenta" en `1250`.
@@ -395,7 +395,7 @@ cd android && ./gradlew assembleRelease   # APK (requiere Java 21)
 | Datos en tránsito | HTTPS entre la app y Apps Script | Google gestiona los certificados. |
 | Datos en el dispositivo | Caché y conexión en `localStorage` | Sin cifrado adicional. Se borran al desconectar. |
 | Secretos en el repo | Ninguno; la firma va en Secrets de GitHub | El repositorio es público. |
-| Análisis externos | Ninguno en el código | El dictado nativo usa el servicio de voz de Google del propio celular. |
+| Reconocimiento de voz | Lo hace el sistema operativo o el navegador | En el APK, el servicio de voz de Google del celular; en el navegador, Chrome (que en general envía el audio a servidores de Google). La interpretación de la frase sí es local. |
 | Widget | El texto del balance queda en SharedPreferences | Si el balance está oculto, solo se guarda `***`. |
 
 **Mejora posible:** Google Sign-In (ya listado como pendiente en `CLAUDE.md`) permitiría autenticar sin depender de una URL secreta, pero requiere configurar un proyecto en Google Cloud.
