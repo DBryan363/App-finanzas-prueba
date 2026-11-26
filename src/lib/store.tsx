@@ -32,6 +32,8 @@ interface Ctx {
   desconectar(): void;
   recargar(): Promise<void>;
   guardarMovimiento(m: Movimiento, nuevo: boolean): Promise<void>;
+  /** Varios movimientos nuevos: aparecen todos al instante y se envían a la hoja de uno en uno. */
+  agregarMovimientos(ms: Movimiento[]): Promise<void>;
   borrarMovimiento(id: string): Promise<void>;
   guardarCategorias(c: Categoria[]): Promise<void>;
   guardarConfig(c: Config): Promise<void>;
@@ -104,6 +106,11 @@ export function ProveedorFinanzas({ children }: { children: ReactNode }) {
       optimista(
         (d) => ({ ...d, movimientos: nuevo ? [...d.movimientos, m] : d.movimientos.map((x) => (x.id === m.id ? m : x)) }),
         (a) => (nuevo ? a.agregar(m) : a.editar(m)),
+      ),
+    agregarMovimientos: (ms) =>
+      optimista(
+        (d) => ({ ...d, movimientos: [...d.movimientos, ...ms] }),
+        async (a) => { for (const m of ms) await a.agregar(m); },
       ),
     borrarMovimiento: (id) =>
       optimista((d) => ({ ...d, movimientos: d.movimientos.filter((x) => x.id !== id) }), (a) => a.borrar(id)),

@@ -201,6 +201,7 @@ Todas las respuestas son JSON con `ok: true` o `ok: false, error`. Las escritura
 
 - **Conexión** (`finanzas.conexion` en localStorage): `{modo: 'sheets', url}`, `{modo: 'demo'}` o nada (muestra la pantalla Conectar).
 - **Caché** (`finanzas.cache`): copia de los últimos datos de Sheets. Permite mostrar la app al instante mientras se recargan los datos reales.
+- **Varios a la vez**: `agregarMovimientos(ms)` muestra todos los movimientos al instante y los envía a la hoja de uno en uno, en orden, para no saturar el bloqueo de Apps Script.
 - **Escrituras optimistas**: `optimista(cambio, accion)` aplica el cambio al estado de inmediato, lanza la petición en segundo plano y cuenta las pendientes (`sincronizando`). Si falla, muestra un error y vuelve a cargar los datos reales del servidor para corregir el estado.
 
 ### 4.2 Ciclo de vida de una sesión
@@ -262,7 +263,7 @@ Esto significa que, con unos pocos miles de movimientos, el cálculo es instant�
 | `pages/Movimientos.tsx` | Lista del mes agrupada por día, con búsqueda y filtros |
 | `pages/Ajustes.tsx` | Preferencias (nombre, moneda, meta, tema, ocultar balance), categorías con su editor, conexión |
 | `pages/Conectar.tsx` | Pantalla inicial: pegar la URL de Apps Script, o entrar en modo demo |
-| `components/FormMovimiento.tsx` | Alta y edición de un movimiento; también es el destino del dictado por voz |
+| `components/FormMovimiento.tsx` | Alta de uno o varios movimientos (lista con «Añadir otro movimiento») y edición de uno; también es el destino del dictado por voz |
 | `components/Hoja.tsx` | Panel deslizable reutilizable |
 | `components/GraficoTendencia.tsx` | Gráfico de barras con Recharts |
 | `components/SelectorMes.tsx` | Navegación entre meses |
@@ -302,7 +303,11 @@ Esta parte no usa servicios externos ni modelos de IA; son reglas de texto que s
 4. **Categoría**: busca palabras clave en cada categoría. Las fuentes son el nombre de la categoría, una lista base en `PALABRAS_BASE` (comida, transporte, vivienda, etc.) y las palabras aprendidas del usuario.
 5. **Nota**: el resto de la frase, sin lo que ya se usó como monto, fecha o categoría.
 
-### 6.3 Aprendizaje
+### 6.3 Varios movimientos en una frase
+
+`interpretarVarios()` parte la frase cuando encuentra más de un monto: *"ayer gasté 20 en almuerzo, 15 en taxi y me pagaron 500"* da tres movimientos. Cada trozo lleva un solo monto y se corta en el último separador (coma, "y", "también", "luego"…) entre dos montos. Si no hay separador, se corta justo antes del siguiente monto. La fecha y el tipo se heredan del trozo anterior cuando un trozo no los dice. Cada trozo se interpreta luego con `interpretar()`.
+
+### 6.4 Aprendizaje
 
 Cuando el usuario corrige la categoría que propuso la app, `aprender()` añade el concepto a la lista de esa categoría. La lista se guarda como JSON en la clave `palabras` de `Config`, así que se sincroniza entre dispositivos.
 

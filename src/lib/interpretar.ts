@@ -130,7 +130,8 @@ export function interpretar(frase: string, categorias: Categoria[], aprendidas: 
   const f = extraerFecha(t, hoy);
   t = f.resto;
   const mo = extraerMonto(t);
-  t = mo.resto;
+  // Las comas que quedan ya no son decimales: separan palabras ("almuerzo, taxi")
+  t = mo.resto.replace(/,/g, ' ');
 
   // Categoría: gana la palabra clave más larga encontrada (respetando el tipo si ya se sabe)
   let mejor: { id: string; tipo: Tipo; largo: number; palabra: string } | null = null;
@@ -148,6 +149,46 @@ export function interpretar(frase: string, categorias: Categoria[], aprendidas: 
   const nota = concepto ? concepto.charAt(0).toUpperCase() + concepto.slice(1, 60) : '';
 
   return { tipo, monto: mo.monto, categoria: mejor?.id ?? null, fecha: f.fecha, nota, concepto };
+}
+
+/* ───────── Varios movimientos en una sola frase ───────── */
+
+const RE_MONTOS = /\d+\s*(?:soles?|lucas?|dolares?)?\s+con\s+\d{1,2}\b(?:\s*(?:centimos?|centavos?))?|(?:s\/\s*)?(?:\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)/g;
+const RE_FECHA_CON_NUMERO = /\bhace \d+ dias?\b/g;
+const RE_SEPARADOR = /,|\s(?:y|tambien|ademas|luego|despues|aparte)\s/g;
+
+/**
+ * "Ayer gasté 20 en almuerzo, 15 en taxi y me pagaron 500" → 3 movimientos.
+ * Cada trozo lleva un solo monto. Se corta en el último separador (coma, "y", "también"…)
+ * entre dos montos; si no hay, justo antes del siguiente monto ("20 en almuerzo 15 en taxi").
+ * La fecha y el tipo se heredan del trozo anterior cuando un trozo no los dice.
+ */
+export function interpretarVarios(frase: string, categorias: Categoria[], aprendidas: Record<string, string> = {}, hoy = new Date()): Interpretacion[] {
+  const t = palabrasANumeros(normalizar(frase));
+  const fechas = [...t.matchAll(RE_FECHA_CON_NUMERO)].map((m) => [m.index!, m.index! + m[0].length]);
+  const montos = [...t.matchAll(RE_MONTOS)].filter((m) => !fechas.some(([a, b]) => m.index! < b && m.index! + m[0].length > a));
+  if (montos.length < 2) return [interpretar(frase, categorias, aprendidas, hoy)];
+
+  const trozos: string[] = [];
+  let inicio = 0;
+  for (let i = 0; i < montos.length - 1; i++) {
+    const finA = montos[i].index! + montos[i][0].length;
+    const iniB = montos[i + 1].index!;
+    let corte = iniB, largo = 0;
+    for (const s of t.slice(finA, iniB).matchAll(RE_SEPARADOR)) { corte = finA + s.index!; largo = s[0].length; }
+    trozos.push(t.slice(inicio, corte));
+    inicio = corte + largo;
+  }
+  trozos.push(t.slice(inicio));
+
+  const rs = trozos.map((x) => interpretar(x, categorias, aprendidas, hoy));
+  let fecha = rs.find((r) => r.fecha)?.fecha ?? null;
+  let tipo = rs.find((r) => r.tipo)?.tipo ?? null;
+  return rs.map((r) => {
+    fecha = r.fecha ?? fecha;
+    tipo = r.tipo ?? tipo;
+    return { ...r, fecha, tipo };
+  });
 }
 
 /** Lee/escribe las palabras aprendidas, guardadas en Config como JSON { idCategoria: "pasaje, combi" }. */
