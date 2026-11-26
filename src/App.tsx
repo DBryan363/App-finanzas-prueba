@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Home, List, Loader2, Plus, Settings, X } from 'lucide-react';
 import { Movimiento, Tipo } from './api/types';
 import { FormMovimiento } from './components/FormMovimiento';
-import { dinero, mesActual, mesLargo } from './lib/format';
+import { dinero, dineroOculto, mesActual, mesLargo } from './lib/format';
 import { actualizarWidget, escucharAccesos } from './lib/nativo';
 import { delMes, totales } from './lib/stats';
 import { useFinanzas } from './lib/store';
@@ -56,7 +56,8 @@ export default function App() {
     const mes = mesActual();
     const t = totales(delMes(datos.movimientos, mes));
     const m = datos.config.moneda;
-    actualizarWidget({ mes: mesLargo(mes).split(' ')[0], balance: dinero(t.balance, m), ingresos: dinero(t.ingresos, m), gastos: dinero(t.gastos, m) });
+    const balance = datos.config.ocultarBalance === 'si' ? dineroOculto(m) : dinero(t.balance, m);
+    actualizarWidget({ mes: mesLargo(mes).split(' ')[0], balance, ingresos: dinero(t.ingresos, m), gastos: dinero(t.gastos, m) });
   }, [datos]);
 
   if (!conexion) return <Conectar />;

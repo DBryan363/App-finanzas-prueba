@@ -65,6 +65,21 @@ export function Ajustes() {
             ))}
           </div>
         </div>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="flex-1">
+            <span className="block">Ocultar balance</span>
+            <span className="block text-xs text-ink-2">Muestra «***» en el resumen y en el widget. Toca el balance para verlo un momento.</span>
+          </span>
+          <button
+            role="switch"
+            aria-checked={cfg.ocultarBalance === 'si'}
+            aria-label="Ocultar balance"
+            onClick={() => cambiar('ocultarBalance', cfg.ocultarBalance === 'si' ? 'no' : 'si')}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${cfg.ocultarBalance === 'si' ? 'bg-hero' : 'bg-surface-2 ring-1 ring-line'}`}
+          >
+            <span className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${cfg.ocultarBalance === 'si' ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
         <button className="btn btn-primary w-full" disabled={!sinGuardar} onClick={() => guardarConfig(cfg)}>
           {sinGuardar ? 'Guardar preferencias' : 'Preferencias guardadas'}
         </button>

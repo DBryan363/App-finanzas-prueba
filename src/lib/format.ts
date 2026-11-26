@@ -33,6 +33,15 @@ export function fechaLegible(fecha: string) {
 }
 
 const cacheFmt = new Map<string, Intl.NumberFormat>();
+/** Importe oculto (modo privacidad): conserva el símbolo de la moneda, p. ej. «S/ ***». */
+export function dineroOculto(moneda = 'PEN') {
+  const partes = new Intl.NumberFormat('es-PE', { style: 'currency', currency: moneda }).formatToParts(0);
+  let puesto = false;
+  return partes
+    .map((p) => (p.type === 'currency' || p.type === 'literal' ? p.value : puesto ? '' : ((puesto = true), '***')))
+    .join('');
+}
+
 export function dinero(n: number, moneda = 'PEN', compacto = false) {
   const k = moneda + compacto;
   if (!cacheFmt.has(k)) {

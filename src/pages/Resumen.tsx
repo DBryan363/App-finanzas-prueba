@@ -1,9 +1,10 @@
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Target } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Eye, EyeOff, Target } from 'lucide-react';
 import { Movimiento } from '../api/types';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { GraficoTendencia } from '../components/GraficoTendencia';
 import { SelectorMes } from '../components/SelectorMes';
-import { dinero, moverMes } from '../lib/format';
+import { dinero, dineroOculto, moverMes } from '../lib/format';
 import { delMes, porCategoria, tendencia, totales } from '../lib/stats';
 import { useFinanzas } from '../lib/store';
 
@@ -11,6 +12,7 @@ interface Props { mes: string; setMes(m: string): void; onEditar(m: Movimiento):
 
 export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
   const { datos } = useFinanzas();
+  const [revelar, setRevelar] = useState(false);
   if (!datos) return null;
   const { config, categorias, movimientos } = datos;
   const moneda = config.moneda;
@@ -33,7 +35,14 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
           <SelectorMes mes={mes} onCambio={setMes} claro />
         </div>
         <p className="text-xs font-medium uppercase tracking-wider text-gold">Balance del mes</p>
-        <p className="tabular mt-1 text-4xl font-bold tracking-tight">{dinero(t.balance, moneda)}</p>
+        {config.ocultarBalance === 'si' ? (
+          <button onClick={() => setRevelar(!revelar)} className="mt-1 flex items-center gap-3 text-left" aria-label={revelar ? 'Ocultar balance' : 'Mostrar balance'}>
+            <span className="tabular text-4xl font-bold tracking-tight">{revelar ? dinero(t.balance, moneda) : dineroOculto(moneda)}</span>
+            {revelar ? <EyeOff size={20} className="text-white/60" /> : <Eye size={20} className="text-white/60" />}
+          </button>
+        ) : (
+          <p className="tabular mt-1 text-4xl font-bold tracking-tight">{dinero(t.balance, moneda)}</p>
+        )}
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white/8 p-3">
             <p className="flex items-center gap-1 text-xs text-white/70"><ArrowUpRight size={14} /> Ingresos</p>
@@ -62,7 +71,7 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
             <div className="h-full rounded-full bg-gold transition-all" style={{ width: `${avance * 100}%` }} />
           </div>
           <p className="tabular mt-2 text-xs text-ink-2">
-            {t.balance >= meta ? '¡Meta cumplida! ' : ''}Ahorrado {dinero(Math.max(t.balance, 0), moneda)} de {dinero(meta, moneda)}
+            {t.balance >= meta ? '¡Meta cumplida! ' : ''}Ahorrado {config.ocultarBalance === 'si' && !revelar ? dineroOculto(moneda) : dinero(Math.max(t.balance, 0), moneda)} de {dinero(meta, moneda)}
           </p>
         </section>
       )}
