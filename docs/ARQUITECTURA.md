@@ -353,7 +353,18 @@ El widget tiene cuatro zonas clicables. Cada una abre `MainActivity` con una URL
 
 ### 7.3 Botón atrás
 
-El botón atrás de Android cierra primero el formulario o vuelve a Resumen, y solo sale de la app si ya está en Resumen sin paneles abiertos.
+El botón atrás de Android cierra primero el formulario o vuelve a Resumen, y solo sale de la app si ya está en Resumen sin paneles abiertos. Con la app bloqueada, sale directamente.
+
+### 7.4 Bloqueo con huella y registro rápido
+
+Solo en el APK (`src/lib/seguridad.ts`, `components/Bloqueo.tsx`, `components/AjustesSeguridad.tsx`). Las preferencias se guardan en `localStorage` (`finanzas.seguridad`) de cada celular, no en la hoja, porque la versión web no tiene huella.
+
+- **Plugins:** `@aparajita/capacitor-biometric-auth` para la huella, con `allowDeviceCredential` para que el PIN o patrón del celular sirva de respaldo, y `@capacitor/privacy-screen` para la vista previa en blanco en «apps recientes». Este último usa `FLAG_SECURE`, que también impide capturas.
+- **Al abrir:** si el bloqueo está activo, `App.tsx` muestra `Bloqueo` en lugar de las pestañas y pide la huella tras 600 ms. La espera deja tiempo a que llegue un acceso del widget: si se abrió para registrar, no se pide.
+- **Al volver:** `escucharPausa` (eventos `pause` y `resume`) vuelve a bloquear si pasó el tiempo elegido (al salir, 1 o 5 minutos). El diálogo de huella o PIN también pausa la app, así que esas pausas se ignoran mientras dura y 1,5 segundos después (`autenticandoAhora`).
+- **Registro rápido:** con la app bloqueada, los botones del widget y de la pantalla de bloqueo abren solo `FormMovimiento` con `rapido`. Si se desactiva esa opción, el acceso del widget espera al desbloqueo.
+- **Activación:** antes de activar el bloqueo se comprueba que el celular tenga huella o PIN y se pide una vez, para no dejar a nadie fuera.
+- **Pruebas en navegador:** `VITE_PROBAR_SEGURIDAD=1 npm run build` activa el simulador del plugin, que usa diálogos `confirm()`.
 
 ---
 
@@ -402,6 +413,7 @@ cd android && ./gradlew assembleRelease   # APK (requiere Java 21)
 | Secretos en el repo | Ninguno; la firma va en Secrets de GitHub | El repositorio es público. |
 | Reconocimiento de voz | Lo hace el sistema operativo o el navegador | En el APK, el servicio de voz de Google del celular; en el navegador, Chrome (que en general envía el audio a servidores de Google). La interpretación de la frase sí es local. |
 | Widget | Los textos del widget quedan en SharedPreferences | Si el balance está oculto, solo se guarda `***` para balance, ingresos y gastos. |
+| Celular desbloqueado en manos ajenas | Bloqueo opcional con huella o PIN (APK) | Protege lo que se ve en la app. No protege la hoja si la cuenta de Google está abierta en el celular: para eso, archivar la implementación de Apps Script (ver Ajustes › Si pierdes el celular). |
 
 **Mejora posible:** Google Sign-In (ya listado como pendiente en `CLAUDE.md`) permitiría autenticar sin depender de una URL secreta, pero requiere configurar un proyecto en Google Cloud.
 

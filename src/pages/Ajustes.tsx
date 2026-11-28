@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ExternalLink, LogOut, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { AlmacenDemo } from '../api/demo';
 import { Categoria, Config, Tipo } from '../api/types';
+import { AjustesSeguridad, SiPierdesElCelular } from '../components/AjustesSeguridad';
 import { Hoja } from '../components/Hoja';
 import { MONEDAS, uid } from '../lib/format';
 import { leerAprendidas, normalizar, PALABRAS_BASE } from '../lib/interpretar';
@@ -68,7 +69,7 @@ export function Ajustes() {
         <div className="flex items-center gap-3 text-sm">
           <span className="flex-1">
             <span className="block">Ocultar balance</span>
-            <span className="block text-xs text-ink-2">Muestra «***» en el resumen. En el widget también oculta ingresos y gastos. Toca el balance para verlo un momento.</span>
+            <span className="block text-xs text-ink-2">Muestra «***» en el balance, los ingresos y los gastos, en el resumen y en el widget. En el resumen, toca el balance para verlos un momento.</span>
           </span>
           <button
             role="switch"
@@ -84,6 +85,8 @@ export function Ajustes() {
           {sinGuardar ? 'Guardar preferencias' : 'Preferencias guardadas'}
         </button>
       </section>
+
+      <AjustesSeguridad />
 
       <section className="card p-4">
         <div className="mb-3 flex items-center justify-between">
@@ -132,6 +135,8 @@ export function Ajustes() {
           <button className="btn btn-ghost text-sm text-danger" onClick={desconectar}><LogOut size={16} /> {conexion?.modo === 'demo' ? 'Salir del demo' : 'Desconectar'}</button>
         </div>
       </section>
+
+      {conexion?.modo === 'sheets' && <SiPierdesElCelular />}
 
       <EditorCategoria cat={editCat} palabras={editCat ? aprendidas[editCat.id] ?? '' : ''} onCerrar={() => setEditCat(null)} onGuardar={guardarCat} onBorrar={borrarCat}
         existe={!!editCat && datos.categorias.some((x) => x.id === editCat.id)}

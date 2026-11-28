@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Home, List, Loader2, Plus, Settings, X } from 'lucide-react';
 import { Movimiento, Tipo } from './api/types';
+import { Bloqueo } from './components/Bloqueo';
 import { FormMovimiento } from './components/FormMovimiento';
 import { dinero, dineroOculto, mesActual, mesLargo } from './lib/format';
-import { actualizarWidget, escucharAccesos } from './lib/nativo';
+import { actualizarWidget, escucharAccesos, escucharPausa } from './lib/nativo';
+import { aplicarPrivacidad, autenticandoAhora, bloqueoActivo, leerSeguridad, minutosRebloqueo, useSeguridad } from './lib/seguridad';
 import { delMes, totales } from './lib/stats';
 import { useFinanzas } from './lib/store';
 import { Ajustes } from './pages/Ajustes';
@@ -12,6 +14,9 @@ import { Movimientos } from './pages/Movimientos';
 import { Resumen } from './pages/Resumen';
 
 type Pestana = 'resumen' | 'movimientos' | 'ajustes';
+type Acceso = { tipo?: Tipo; voz?: boolean };
+type Form = { abierto: boolean; mov: Movimiento | null; tipo?: Tipo; voz?: boolean };
+const CERRADO: Form = { abierto: false, mov: null };
 
 function useTema(tema?: string) {
   useEffect(() => {
@@ -31,24 +36,59 @@ export default function App() {
   const { conexion, datos, cargando, sincronizando, error, limpiarError } = useFinanzas();
   const [pestana, setPestana] = useState<Pestana>('resumen');
   const [mes, setMes] = useState(mesActual());
-  const [form, setForm] = useState<{ abierto: boolean; mov: Movimiento | null; tipo?: Tipo; voz?: boolean }>({ abierto: false, mov: null });
+  const [form, setForm] = useState<Form>(CERRADO);
   useTema(datos?.config.tema);
 
+  // Bloqueo con huella (solo APK). Mientras está bloqueada solo se puede registrar (si se permite).
+  const seguridad = useSeguridad();
+  const [bloqueado, setBloqueado] = useState(bloqueoActivo);
+  /** Acceso del widget que espera al desbloqueo (cuando no se permite registrar sin desbloquear). */
+  const [pendiente, setPendiente] = useState<Acceso | null>(null);
+  const pausa = useRef(0);
+  useEffect(aplicarPrivacidad, []);
+
   // Accesos directos (widget / atajos) y botón atrás de Android
-  const estado = useRef({ form, pestana });
-  estado.current = { form, pestana };
+  const estado = useRef({ form, pestana, bloqueado });
+  estado.current = { form, pestana, bloqueado };
   useEffect(
     () =>
       escucharAccesos(
-        (a) => setForm({ abierto: true, mov: null, tipo: a.tipo, voz: a.voz }),
+        (a) => {
+          if (!estado.current.bloqueado || leerSeguridad().rapido) setForm({ abierto: true, mov: null, tipo: a.tipo, voz: a.voz });
+          else setPendiente(a);
+        },
         () => {
-          if (estado.current.form.abierto) { setForm({ abierto: false, mov: null }); return true; }
+          if (estado.current.form.abierto) { setForm(CERRADO); return true; }
+          if (estado.current.bloqueado) return false;
           if (estado.current.pestana !== 'resumen') { setPestana('resumen'); return true; }
           return false;
         },
       ),
     [],
   );
+
+  // Vuelve a bloquear si la app estuvo en segundo plano más del tiempo elegido
+  useEffect(
+    () =>
+      escucharPausa(
+        () => { if (!autenticandoAhora()) pausa.current = Date.now(); },
+        () => {
+          const desde = pausa.current;
+          pausa.current = 0;
+          if (!desde || autenticandoAhora() || !bloqueoActivo() || estado.current.bloqueado) return;
+          if (Date.now() - desde < minutosRebloqueo() * 60_000) return;
+          setBloqueado(true);
+          // Un registro nuevo puede seguir (registro rápido); editar uno existente, no
+          setForm((f) => (f.mov || !leerSeguridad().rapido ? CERRADO : f));
+        },
+      ),
+    [],
+  );
+
+  const desbloquear = () => {
+    setBloqueado(false);
+    if (pendiente) { setForm({ abierto: true, mov: null, ...pendiente }); setPendiente(null); }
+  };
 
   // Mantiene el widget de Android al día con el mes actual
   useEffect(() => {
@@ -62,6 +102,20 @@ export default function App() {
   }, [datos]);
 
   if (!conexion) return <Conectar />;
+
+  if (bloqueado) {
+    return (
+      <>
+        <Bloqueo
+          pedirAlAbrir={!form.abierto}
+          rapido={seguridad.rapido && !!datos}
+          onDesbloquear={desbloquear}
+          onRegistrar={(a) => setForm({ abierto: true, mov: null, ...a })}
+        />
+        <FormMovimiento abierta={form.abierto && !!datos} tipoInicial={form.tipo} conVoz={form.voz} rapido onCerrar={() => setForm(CERRADO)} />
+      </>
+    );
+  }
 
   if (!datos) {
     return (
@@ -129,7 +183,7 @@ export default function App() {
         </div>
       </nav>
 
-      <FormMovimiento abierta={form.abierto} editar={form.mov} tipoInicial={form.tipo} conVoz={form.voz} onCerrar={() => setForm({ abierto: false, mov: null })} />
+      <FormMovimiento abierta={form.abierto} editar={form.mov} tipoInicial={form.tipo} conVoz={form.voz} onCerrar={() => setForm(CERRADO)} />
     </div>
   );
 }

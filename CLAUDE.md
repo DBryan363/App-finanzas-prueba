@@ -10,13 +10,13 @@ App personal de finanzas (ingresos/gastos en Google Sheets, moneda base PEN). Ca
 - No verificable aquí: github.io (proxy) ni dispositivo real/emulador. Probar con Playwright en web.
 
 ## Stack
-React 18 + Vite 6 + TypeScript 5 + Tailwind v4 + Recharts + lucide-react. Vite `base: './'`. Capacitor 8 (`pe.misfinanzas.app`) con plugins `@capacitor/app` y `@capacitor-community/speech-recognition`.
+React 18 + Vite 6 + TypeScript 5 + Tailwind v4 + Recharts + lucide-react. Vite `base: './'`. Capacitor 8 (`pe.misfinanzas.app`) con plugins `@capacitor/app`, `@capacitor-community/speech-recognition`, `@aparajita/capacitor-biometric-auth` (huella, con PIN de respaldo) y `@capacitor/privacy-screen`.
 Versiones fijadas (plugin-react@4, vite@6, typescript@5) por conflicto de peer deps.
 
 ## Mapa del código
 - `apps-script/Code.gs` — backend que el usuario pega en su hoja (hojas Movimientos, Categorias, Config; acciones setup/agregar/editar/borrar/guardarCategorias/guardarConfig). Cambiarlo obliga a cada usuario a re-desplegar: preferir guardar cosas nuevas en Config.
 - `src/api/` — `types.ts` (interfaz `Almacen`), `sheets.ts` (POST `text/plain` para evitar preflight CORS), `demo.ts` (localStorage).
-- `src/lib/` — `store.tsx` (estado, actualizaciones optimistas con setState funcional), `interpretar.ts` (parser NLP local de frases de voz; palabras aprendidas en Config clave `palabras`), `voz.ts` (nativo vs Web Speech), `nativo.ts` (widget, deep links, botón atrás), `format.ts`, `stats.ts`.
+- `src/lib/` — `store.tsx` (estado, actualizaciones optimistas con setState funcional), `interpretar.ts` (parser NLP local de frases de voz; palabras aprendidas en Config clave `palabras`), `voz.ts` (nativo vs Web Speech), `nativo.ts` (widget, deep links, botón atrás, pausa/vuelta), `seguridad.ts` (bloqueo con huella; prefs por celular en localStorage `finanzas.seguridad`; `VITE_PROBAR_SEGURIDAD=1` lo simula en web), `format.ts`, `stats.ts`.
 - `src/components/`, `src/pages/` (Resumen, Movimientos, Ajustes, Conectar), `src/App.tsx`, `src/index.css`.
 - `android/…/pe/misfinanzas/app/` — `MainActivity`, `WidgetPlugin` (`FinanzasWidget`), `FinanzasWidget` (AppWidget 4x1). Layout en `res/layout/widget_finanzas.xml`.
 - `.github/workflows/` — `pages.yml`, `apk.yml` (release prerelease `apk-v0.1.N`).

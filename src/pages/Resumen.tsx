@@ -25,6 +25,9 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
   const avance = meta ? Math.max(0, Math.min(1, t.balance / meta)) : 0;
   const ultimos = [...movsMes].sort((a, b) => (b.fecha + b.creado).localeCompare(a.fecha + a.creado)).slice(0, 5);
   const catDe = (id: string) => categorias.find((c) => c.id === id);
+  // Modo privado: balance, ingresos y gastos se ven como «S/ ***» hasta tocar el ojo
+  const oculto = config.ocultarBalance === 'si' && !revelar;
+  const ver = (n: number) => (oculto ? dineroOculto(moneda) : dinero(n, moneda));
 
   return (
     <div className="space-y-4">
@@ -36,8 +39,8 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
         </div>
         <p className="text-xs font-medium uppercase tracking-wider text-gold">Balance del mes</p>
         {config.ocultarBalance === 'si' ? (
-          <button onClick={() => setRevelar(!revelar)} className="mt-1 flex items-center gap-3 text-left" aria-label={revelar ? 'Ocultar balance' : 'Mostrar balance'}>
-            <span className="tabular text-4xl font-bold tracking-tight">{revelar ? dinero(t.balance, moneda) : dineroOculto(moneda)}</span>
+          <button onClick={() => setRevelar(!revelar)} className="mt-1 flex items-center gap-3 text-left" aria-label={revelar ? 'Ocultar montos' : 'Mostrar montos'}>
+            <span className="tabular text-4xl font-bold tracking-tight">{ver(t.balance)}</span>
             {revelar ? <EyeOff size={20} className="text-white/60" /> : <Eye size={20} className="text-white/60" />}
           </button>
         ) : (
@@ -46,11 +49,11 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white/8 p-3">
             <p className="flex items-center gap-1 text-xs text-white/70"><ArrowUpRight size={14} /> Ingresos</p>
-            <p className="tabular mt-1 text-lg font-semibold">{dinero(t.ingresos, moneda)}</p>
+            <p className="tabular mt-1 text-lg font-semibold">{ver(t.ingresos)}</p>
           </div>
           <div className="rounded-2xl bg-white/8 p-3">
             <p className="flex items-center gap-1 text-xs text-white/70"><ArrowDownRight size={14} /> Gastos</p>
-            <p className="tabular mt-1 text-lg font-semibold">{dinero(t.gastos, moneda)}</p>
+            <p className="tabular mt-1 text-lg font-semibold">{ver(t.gastos)}</p>
             {cambioGasto !== null && (
               <p className="mt-0.5 text-[11px] text-white/60">
                 {cambioGasto > 0 ? '▲' : '▼'} {Math.abs(cambioGasto * 100).toFixed(0)}% vs mes anterior
@@ -71,7 +74,7 @@ export function Resumen({ mes, setMes, onEditar, verTodos }: Props) {
             <div className="h-full rounded-full bg-gold transition-all" style={{ width: `${avance * 100}%` }} />
           </div>
           <p className="tabular mt-2 text-xs text-ink-2">
-            {t.balance >= meta ? '¡Meta cumplida! ' : ''}Ahorrado {config.ocultarBalance === 'si' && !revelar ? dineroOculto(moneda) : dinero(Math.max(t.balance, 0), moneda)} de {dinero(meta, moneda)}
+            {t.balance >= meta ? '¡Meta cumplida! ' : ''}Ahorrado {ver(Math.max(t.balance, 0))} de {dinero(meta, moneda)}
           </p>
         </section>
       )}

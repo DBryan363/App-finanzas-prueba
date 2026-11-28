@@ -13,6 +13,16 @@ export function actualizarWidget(o: { mes: string; balance: string; ingresos: st
   if (esNativo) Widget.actualizar(o).catch(() => {});
 }
 
+/** Avisa cuando la app pasa a segundo plano y cuando vuelve. Devuelve la función para dejar de escuchar. */
+export function escucharPausa(alPausar: () => void, alVolver: () => void) {
+  const h1 = App.addListener('pause', alPausar);
+  const h2 = App.addListener('resume', alVolver);
+  return () => {
+    h1.then((h) => h.remove());
+    h2.then((h) => h.remove());
+  };
+}
+
 type Acceso = { tipo?: Tipo; voz?: boolean };
 function tipoDesdeUrl(url: string): Acceso | null {
   if (/[/?&]voz\b/.test(url)) return { voz: true };

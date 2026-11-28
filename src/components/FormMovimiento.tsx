@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, Mic, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Lock, Mic, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { Categoria, Movimiento, Tipo } from '../api/types';
 import { dinero, fechaLegible, hoyISO, uid } from '../lib/format';
 import { aprender, Interpretacion, interpretarVarios, leerAprendidas } from '../lib/interpretar';
@@ -7,7 +7,12 @@ import { Escucha, escuchar, vozDisponible } from '../lib/voz';
 import { useFinanzas } from '../lib/store';
 import { Hoja } from './Hoja';
 
-interface Props { abierta: boolean; editar?: Movimiento | null; tipoInicial?: Tipo; conVoz?: boolean; onCerrar(): void }
+interface Props {
+  abierta: boolean; editar?: Movimiento | null; tipoInicial?: Tipo; conVoz?: boolean;
+  /** Abierto con la app bloqueada: solo se puede registrar. */
+  rapido?: boolean;
+  onCerrar(): void;
+}
 
 /** Un movimiento del formulario, todavía sin guardar. */
 interface Borrador {
@@ -25,7 +30,7 @@ const vacio = (tipo: Tipo, fecha = hoyISO()): Borrador => ({ key: uid(), tipo, m
 const valor = (b: Borrador) => Number(b.monto.replace(',', '.'));
 const completo = (b: Borrador) => valor(b) > 0 && !!b.categoria && !!b.fecha;
 
-export function FormMovimiento({ abierta, editar, tipoInicial = 'gasto', conVoz = false, onCerrar }: Props) {
+export function FormMovimiento({ abierta, editar, tipoInicial = 'gasto', conVoz = false, rapido = false, onCerrar }: Props) {
   const { datos, guardarMovimiento, agregarMovimientos, borrarMovimiento, guardarConfig } = useFinanzas();
   const [lista, setLista] = useState<{ items: Borrador[]; activo: number }>({ items: [vacio(tipoInicial)], activo: 0 });
   const [confirmar, setConfirmar] = useState(false);
@@ -158,6 +163,11 @@ export function FormMovimiento({ abierta, editar, tipoInicial = 'gasto', conVoz 
 
   return (
     <Hoja abierta={abierta} titulo={titulo} onCerrar={onCerrar}>
+      {rapido && (
+        <p className="mb-4 flex items-center gap-2 rounded-xl bg-gold/15 px-3 py-2 text-xs font-semibold text-gold-ink">
+          <Lock size={14} /> Registro rápido <span className="font-medium text-ink-2">· para ver tus datos, desbloquea</span>
+        </p>
+      )}
       <div className="mb-4 flex gap-2">
         <div className="grid flex-1 grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1">
           {(['gasto', 'ingreso'] as Tipo[]).map((t) => (
